@@ -1,0 +1,6 @@
+{
+  "name": "Franja Leads",
+  "description": "Plataforma B2B para extracción de prospectos comerciales de Google Maps con Supabase Auth, n8n y Mercado Pago.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
