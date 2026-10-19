@@ -65,10 +65,12 @@ export const searchService = {
       };
     }
 
+    const sessionRes = await authService.getSession();
+    const userProfile = authService.extractUserProfile(sessionRes.session);
+    const userId = userProfile?.id || userProfile?.googleSub || '';
+
     try {
-      // 4. Send request to n8n webhook.
-      // Notice: Only search criteria are sent in the body.
-      // The backend validates the Bearer token, determines the user identity, checks plan limits and handles credit reservation!
+      // 4. Send request to n8n webhook with search criteria and user identity fields
       const response = await fetch(ENV.N8N_SEARCH_URL, {
         method: 'POST',
         headers: {
@@ -80,6 +82,12 @@ export const searchService = {
           ubicacion: formData.ubicacion.trim(),
           pais: formData.pais,
           cantidad: Number(formData.cantidad),
+          user_id: userId,
+          usuario_id: userId,
+          user_email: userProfile?.email || '',
+          usuario_email: userProfile?.email || '',
+          user_name: userProfile?.name || '',
+          usuario_nombre: userProfile?.name || '',
         }),
       });
 

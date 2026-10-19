@@ -59,17 +59,19 @@ export const creditsService = {
       }
 
       if (!publicUser) {
-        // The user exists in auth.users, but the backend trigger/worker has not yet synchronized it to public.users
+        // The user exists in auth.users, but the PostgreSQL trigger hasn't run yet.
+        // We provide the default 20 courtesy trial credits so they can explore without being blocked at 0.
         return {
           data: {
             plan: 'free',
-            availableCredits: 0,
+            availableCredits: 20,
             reservedCredits: 0,
             consumedCredits: 0,
             isBackendSource: false,
+            lastCheckedAt: new Date().toISOString(),
           },
           status: 'pending_db_sync',
-          message: 'Usuario no sincronizado aún en public.users. Requiere el disparador (trigger) o webhook backend de sincronización.',
+          message: 'Usuario no sincronizado aún en public.users. Mostrando 20 créditos iniciales de cortesía.',
         };
       }
 

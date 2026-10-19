@@ -8,34 +8,47 @@ export const authService = {
     return isSupabaseConfigured();
   },
 
-  async signInWithGoogle(customRedirectTo?: string): Promise<{ error?: string }> {
+  async signInWithGoogle(customRedirectTo?: string): Promise<{ error?: string; url?: string }> {
     const client = getSupabaseClient();
     if (!client) {
-      return {
-        error: 'Supabase no está configurado. Por favor configura VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en tu entorno.',
-      };
+      const msg = !ENV.SUPABASE_URL || !ENV.SUPABASE_ANON_KEY
+        ? 'Faltan las variables VITE_SUPABASE_URL y/o VITE_SUPABASE_ANON_KEY en tu archivo .env local.'
+        : 'Las credenciales de Supabase en tu archivo .env contienen valores de ejemplo o incompletos.';
+      console.error('[Supabase Auth Error]', msg);
+      return { error: msg };
     }
 
-    const redirectTo = customRedirectTo || ENV.APP_URL || (typeof window !== 'undefined' ? window.location.origin : '');
+    // Always prefer the active browser origin (e.g. http://localhost:3000) so redirects land back on the exact running instance
+    const currentOrigin = typeof window !== 'undefined' && window.location?.origin ? window.location.origin : '';
+    const redirectTo = customRedirectTo || currentOrigin || ENV.APP_URL;
+
+    console.log('[Supabase Auth] Starting Google OAuth with redirectTo:', redirectTo);
 
     try {
-      const { error } = await client.auth.signInWithOAuth({
+      const { data, error } = await client.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo,
           queryParams: {
             access_type: 'offline',
-            prompt: 'consent',
+            prompt: 'select_account',
           },
         },
       });
 
       if (error) {
+        console.error('[Supabase Auth signInWithOAuth error]:', error);
         return { error: error.message };
       }
 
-      return {};
+      // If a URL is returned by Supabase, ensure the browser navigates to Google
+      if (data?.url && typeof window !== 'undefined') {
+        window.location.assign(data.url);
+      }
+
+      return { url: data?.url };
     } catch (err: any) {
+      console.error('[Supabase Auth Exception]:', err);
       return { error: err?.message || 'Error inesperado durante la autenticación con Google.' };
     }
   },
